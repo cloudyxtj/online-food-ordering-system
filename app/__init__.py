@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from config import Config
+import os
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -15,6 +16,14 @@ def create_app(config_class=Config):
 
     db.init_app(app)
     login_manager.init_app(app)
+
+    # Ensure the SQLite directory exists (prevents "unable to open database file").
+    uri = app.config.get("SQLALCHEMY_DATABASE_URI", "")
+    if isinstance(uri, str) and uri.startswith("sqlite:///"):
+        sqlite_path = uri.replace("sqlite:///", "", 1)
+        sqlite_dir = os.path.dirname(sqlite_path)
+        if sqlite_dir:
+            os.makedirs(sqlite_dir, exist_ok=True)
 
     from app.routes.auth import auth_bp
     from app.routes.customer import customer_bp

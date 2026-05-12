@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Manage Food — FoodOrder Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Manage Food Items</h2>
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addFoodModal">
+      <i class="bi bi-plus-circle"></i> Add New Item
+    </button>
+  </div>
+
+  {% if not items %}
+    <div class="alert alert-info">No food items yet. Add one using the button above!</div>
+  {% else %}
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Price (RM)</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in items %}
+            <tr>
+              <td>{{ item.food_id }}</td>
+              <td>{{ item.food_name }}</td>
+              <td class="text-muted small">{{ (item.description or "—")[:60] }}{% if item.description and item.description|length > 60 %}...{% endif %}</td>
+              <td>{{ "%.2f"|format(item.price) }}</td>
+              <td>
+                {% if item.status == "Available" %}
+                  <span class="badge bg-success">Available</span>
+                {% elif item.status == "Sold Out" %}
+                  <span class="badge bg-secondary">Sold Out</span>
+                {% else %}
+                  <span class="badge bg-dark">Hidden</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-primary" title="Edit"
+                          data-bs-toggle="modal" data-bs-target="#editFoodModal{{ item.food_id }}">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <form method="POST" action="{{ url_for('admin.toggle_food', food_id=item.food_id) }}" style="display:inline;">
+                    <button class="btn btn-outline-warning" title="Toggle Status"
+                            onclick="return confirm('Toggle status for {{ item.food_name }}?')">
+                      <i class="bi bi-arrow-repeat"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+{# --- Add Food Modal --- #}
+<div class="modal fade" id="addFoodModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('admin.add_food') }}">
+        {{ form.hidden_tag() }}
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Food Item</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            {{ form.food_name.label(class="form-label") }}
+            {{ form.food_name(class="form-control", placeholder="e.g. Double Cheeseburger") }}
+          </div>
+          <div class="mb-3">
+            {{ form.description.label(class="form-label") }}
+            {{ form.description(class="form-control", rows="3", placeholder="Description and ingredients") }}
+          </div>
+          <div class="mb-3">
+            {{ form.price.label(class="form-label") }}
+            {{ form.price(class="form-control", placeholder="12.50") }}
+          </div>
+          <div class="mb-3">
+            {{ form.status.label(class="form-label") }}
+            {{ form.status(class="form-select") }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Add Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% for item in items %}
+{# --- Edit Food Modal --- #}
+<div class="modal fade" id="editFoodModal{{ item.food_id }}" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('admin.edit_food', food_id=item.food_id) }}">
+        {{ form.hidden_tag() }}
+        <div class="modal-header">
+          <h5 class="modal-title">Edit: {{ item.food_name }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Food Name</label>
+            <input class="form-control" name="food_name" value="{{ item.food_name }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description" rows="3">{{ item.description or "" }}</textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Price (RM)</label>
+            <input class="form-control" name="price" type="number" step="0.01" value="{{ item.price }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" name="status">
+              <option value="Available" {{ 'selected' if item.status == 'Available' }}>Available</option>
+              <option value="Sold Out" {{ 'selected' if item.status == 'Sold Out' }}>Sold Out</option>
+              <option value="Hidden" {{ 'selected' if item.status == 'Hidden' }}>Hidden</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

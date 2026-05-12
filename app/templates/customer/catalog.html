@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Menu — FoodOrder{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">Our Menu</h2>
+
+  {% if not items %}
+    <div class="alert alert-info">No food items available right now. Check back later!</div>
+  {% else %}
+    <div class="row g-4">
+      {% for item in items %}
+        <div class="col-sm-6 col-md-4 col-lg-3">
+          <div class="card h-100 shadow-sm">
+            {# Food image placeholder #}
+            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center"
+                 style="height: 160px; background-color: #dee2e6 !important;">
+              <i class="bi bi-cup-hot-fill" style="font-size: 3rem; color: #adb5bd;"></i>
+            </div>
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title">{{ item.food_name }}</h5>
+              <p class="card-text small text-muted flex-grow-1">{{ item.description or "No description." }}</p>
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <span class="fs-5 fw-bold" style="color: #e74c3c;">RM {{ "%.2f"|format(item.price) }}</span>
+                {% if item.status == "Available" %}
+                  <span class="badge bg-success">Available</span>
+                {% else %}
+                  <span class="badge bg-secondary">Sold Out</span>
+                {% endif %}
+              </div>
+              {% if item.status == "Available" %}
+                <form method="POST" action="{{ url_for('customer.add_to_cart', food_id=item.food_id) }}" class="mt-3">
+                  <button type="submit" class="btn btn-primary w-100" style="background-color: #e74c3c; border-color: #e74c3c;">
+                    <i class="bi bi-cart-plus"></i> Add to Cart
+                  </button>
+                </form>
+              {% else %}
+                <button class="btn btn-secondary w-100 mt-3" disabled>Unavailable</button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

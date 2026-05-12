@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Order Confirmed — FoodOrder{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-sm text-center">
+        <div class="card-body py-5">
+          <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+          <h2 class="mt-3">Order Confirmed!</h2>
+          <p class="text-muted">Thank you for your order. Your food is being prepared.</p>
+
+          <div class="bg-light rounded p-4 mt-4 text-start">
+            <p class="mb-1"><strong>Order #:</strong> {{ order.order_id }}</p>
+            <p class="mb-1"><strong>Status:</strong> <span class="badge bg-warning text-dark">{{ order.order_status }}</span></p>
+            <p class="mb-1"><strong>Total:</strong> RM {{ "%.2f"|format(order.total_price) }}</p>
+            <p class="mb-0"><strong>Placed at:</strong> {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+          </div>
+
+          <h5 class="mt-4 mb-3">Order Items</h5>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Qty</th>
+                  <th>Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for oi in order.items %}
+                <tr>
+                  <td>{{ oi.food_item.food_name }}</td>
+                  <td>{{ oi.quantity }}</td>
+                  <td>RM {{ "%.2f"|format(oi.subtotal) }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <a href="{{ url_for('customer.catalog') }}" class="btn btn-primary mt-3" style="background-color: #2c3e50; border-color: #2c3e50;">
+            <i class="bi bi-arrow-left"></i> Back to Menu
+          </a>
+          <a href="{{ url_for('customer.order_history') }}" class="btn btn-outline-secondary mt-3 ms-2">
+            <i class="bi bi-clock-history"></i> View Order History
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

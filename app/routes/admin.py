@@ -135,6 +135,28 @@ def toggle_food(food_id):
     return redirect(url_for("admin.dashboard"))
 
 
+@admin_bp.route("/food/delete/<int:food_id>", methods=["POST"])
+@admin_required
+def delete_food(food_id):
+    """Delete a food item (FR2: DELETE)."""
+    item = db.session.get(FoodItem, food_id)
+    if not item:
+        flash("Food item not found.", "danger")
+        return redirect(url_for("admin.dashboard"))
+    food_name = item.food_name
+    db.session.delete(item)
+    log_action(
+        user_id=current_user.user_id,
+        action_type="DELETE",
+        description=f"Deleted food item: {food_name}",
+        entity_type="food_items",
+        entity_id=food_id,
+    )
+    db.session.commit()
+    flash(f"Food item '{food_name}' deleted.", "success")
+    return redirect(url_for("admin.dashboard"))
+
+
 @admin_bp.route("/orders")
 @admin_required
 def orders():

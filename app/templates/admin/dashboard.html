@@ -26,38 +26,47 @@
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
-            {% for item in items %}
-            <tr>
-              <td>{{ item.food_id }}</td>
-              <td>{{ item.food_name }}</td>
-              <td class="text-muted small">{{ (item.description or "—")[:60] }}{% if item.description and item.description|length > 60 %}...{% endif %}</td>
-              <td>{{ "%.2f"|format(item.price) }}</td>
-              <td>
-                {% if item.status == "Available" %}
-                  <span class="badge bg-success">Available</span>
-                {% elif item.status == "Sold Out" %}
-                  <span class="badge bg-secondary">Sold Out</span>
-                {% else %}
-                  <span class="badge bg-dark">Hidden</span>
-                {% endif %}
-              </td>
-              <td>
-                <div class="btn-group btn-group-sm">
-                  <button class="btn btn-outline-primary" title="Edit"
-                          data-bs-toggle="modal" data-bs-target="#editFoodModal{{ item.food_id }}">
-                    <i class="bi bi-pencil"></i>
+          {% for item in items %}
+          <tr>
+            <td>{{ item.food_id }}</td>
+            <td><strong>{{ item.food_name }}</strong></td>
+            <td class="text-muted small">
+              {{ (item.description or "—")[:60] }}{% if item.description and item.description|length > 60 %}...{% endif %}
+            </td>
+            <td>{{ "%.2f"|format(item.price) }}</td>
+            <td>
+              {% if item.status == "Available" %}
+              <span class="badge bg-success">Available</span>
+              {% elif item.status == "Sold Out" %}
+              <span class="badge bg-secondary">Sold Out</span>
+              {% else %}
+              <span class="badge bg-dark">Hidden</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <div class="action-buttons">
+                <button class="btn btn-peach" title="Edit" data-bs-toggle="modal"
+                  data-bs-target="#editFoodModal{{ item.food_id }}">
+                  <i class="bi bi-pencil"></i>
+                </button>
+          
+                <form method="POST" action="{{ url_for('admin.toggle_food', food_id=item.food_id) }}">
+                  <button class="btn btn-warning" title="Toggle Status"
+                    onclick="return confirm('Toggle status for {{ item.food_name }}?')">
+                    <i class="bi bi-arrow-repeat"></i>
                   </button>
-                  <form method="POST" action="{{ url_for('admin.toggle_food', food_id=item.food_id) }}" style="display:inline;">
-                    <button class="btn btn-outline-warning" title="Toggle Status"
-                            onclick="return confirm('Toggle status for {{ item.food_name }}?')">
-                      <i class="bi bi-arrow-repeat"></i>
-                    </button>
-                  </form>
-                </div>
-              </td>
-            </tr>
-            {% endfor %}
+                </form>
+          
+                <form method="POST" action="{{ url_for('admin.delete_food', food_id=item.food_id) }}">
+                  <button class="btn btn-danger" title="Delete"
+                    onclick="return confirm('Delete {{ item.food_name }}? This cannot be undone.')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
           </tbody>
         </table>
       </div>

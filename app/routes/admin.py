@@ -8,6 +8,8 @@ from decimal import Decimal, InvalidOperation
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from functools import wraps
+
+from wtforms import form
 from app import db
 from app.models import FoodItem, Order, AuditLog
 from app.forms import FoodItemForm
@@ -72,42 +74,42 @@ def add_food():
 @admin_bp.route("/food/edit/<int:food_id>", methods=["POST"])
 @admin_required
 def edit_food(food_id):
-    """Edit an existing food item (FR2: UPDATE)."""
+    # 1. Get the item from the DB
     item = db.session.get(FoodItem, food_id)
     if not item:
         flash("Food item not found.", "danger")
         return redirect(url_for("admin.dashboard"))
 
-    food_name = request.form.get("food_name", "").strip()
-    description = request.form.get("description", "").strip()
-    price_str = request.form.get("price", "").strip()
-    status = request.form.get("status", "Available")
+    # 2. Bind the POST data to the Form
+    form = FoodItemForm()
+    
+    # 3. Use the form to validate (handles Decimal conversion & required fields)
+    if form.validate_on_submit():
+        old_name = item.food_name
+        
+        # Update the database object with the clean form data
+        item.food_name = form.food_name.data.strip()
+        item.description = form.description.data.strip() if form.description.data else ""
+        item.price = form.price.data
+        item.status = form.status.data
 
-    try:
-        price = Decimal(price_str)
-    except (InvalidOperation, TypeError):
-        flash("Invalid price value.", "danger")
-        return redirect(url_for("admin.dashboard"))
+        # 4. Log the action
+        log_action(
+            user_id=current_user.user_id,
+            action_type="UPDATE",
+            description=f"Updated food item #{food_id}: {old_name} → {item.food_name}",
+            entity_type="food_items",
+            entity_id=food_id,
+        )
+        
+        db.session.commit()
+        flash(f"Food item '{item.food_name}' updated successfully.", "success")
+    else:
+        # 5. If validation fails (e.g., negative price), show why
+        for field, errors in form.errors.items():
+            for err in errors:
+                flash(f"{field.replace('_', ' ').title()}: {err}", "danger")
 
-    if not food_name:
-        flash("Food name is required.", "danger")
-        return redirect(url_for("admin.dashboard"))
-
-    old_name = item.food_name
-    item.food_name = food_name
-    item.description = description
-    item.price = price
-    item.status = status
-
-    log_action(
-        user_id=current_user.user_id,
-        action_type="UPDATE",
-        description=f"Updated food item #{food_id}: {old_name} → {food_name}",
-        entity_type="food_items",
-        entity_id=food_id,
-    )
-    db.session.commit()
-    flash(f"Food item '{food_name}' updated.", "success")
     return redirect(url_for("admin.dashboard"))
 
 

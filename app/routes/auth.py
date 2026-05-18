@@ -2,7 +2,7 @@
 
 Covers user onboarding and session management.
 """
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required
 from app import db
 from app.models import User
@@ -15,14 +15,15 @@ auth_bp = Blueprint("auth", __name__)
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
-        existing = User.query.filter_by(email=form.email.data.strip()).first()
+        email = form.email.data.strip().lower()
+        existing = User.query.filter_by(email=email).first()
         if existing:
             flash("An account with this email already exists.", "danger")
             return render_template("auth/register.html", form=form)
 
         user = User(
             name=form.name.data.strip(),
-            email=form.email.data.strip(),
+            email=email,
             role="Customer",
         )
         user.set_password(form.password.data)
@@ -39,7 +40,8 @@ def register():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data.strip()).first()
+        email = form.email.data.strip().lower()
+        user = User.query.filter_by(email=email).first()
         if user and user.check_password(form.password.data):
             if not user.is_active:
                 flash("This account has been disabled.", "danger")
@@ -62,5 +64,7 @@ def login():
 @login_required
 def logout():
     logout_user()
+    # Clear any session-stored state (e.g., cart) on logout.
+    session.pop("cart", None)
     flash("You have been logged out.", "info")
     return redirect(url_for("customer.catalog"))

@@ -1,10 +1,5 @@
-"""Customer routes — Browse Catalog, Cart Management, Checkout.
-
-FR2: Core CRUD — customers browse food items and place orders.
-NFR1: 3-Click Rule — catalog → add to cart → confirm order (3 clicks).
-"""
 from decimal import Decimal
-from flask import Blueprint, render_template, redirect, url_for, flash, session, request
+from flask import Blueprint, abort, render_template, redirect, url_for, flash, session, request
 from flask_login import login_required, current_user
 from app import db
 from app.models import FoodItem, Order, OrderItem
@@ -15,7 +10,6 @@ customer_bp = Blueprint("customer", __name__)
 
 @customer_bp.route("/")
 def catalog():
-    """Browse available food items. Guests and authenticated users can view."""
     items = FoodItem.query.filter(FoodItem.status.in_(["Available", "Sold Out"])).all()
     return render_template("customer/catalog.html", items=items)
 
@@ -23,7 +17,8 @@ def catalog():
 @customer_bp.route("/cart")
 @login_required
 def view_cart():
-    """View shopping cart (stored in session)."""
+    if current_user.role == 'Admin':
+        abort(403)
     cart = session.get("cart", {})
     # Resolve names and prices from DB
     cart_items = {}
@@ -41,7 +36,8 @@ def view_cart():
 @customer_bp.route("/cart/add/<int:food_id>", methods=["POST"])
 @login_required
 def add_to_cart(food_id):
-    """Add an item to the cart."""
+    if current_user.role == 'Admin':
+        abort(403)
     item = db.session.get(FoodItem, food_id)
     if not item or item.status != "Available":
         flash("That item is not available.", "danger")
@@ -57,7 +53,8 @@ def add_to_cart(food_id):
 @customer_bp.route("/cart/remove/<int:food_id>", methods=["POST"])
 @login_required
 def remove_from_cart(food_id):
-    """Remove an item from the cart."""
+    if current_user.role == 'Admin':
+        abort(403)
     cart = session.get("cart", {})
     cart.pop(str(food_id), None)
     session["cart"] = cart
@@ -68,7 +65,8 @@ def remove_from_cart(food_id):
 @customer_bp.route("/checkout", methods=["POST"])
 @login_required
 def checkout():
-    """Convert cart items into an Order (Cash on Delivery)."""
+    if current_user.role == 'Admin':
+        abort(403)
     cart = session.get("cart", {})
     if not cart:
         flash("Your cart is empty.", "warning")
@@ -122,7 +120,8 @@ def checkout():
 @customer_bp.route("/order/<int:order_id>")
 @login_required
 def order_confirmation(order_id):
-    """Show order confirmation page."""
+    if current_user.role == 'Admin':
+        abort(403)
     order = db.session.get(Order, order_id)
     if not order or order.user_id != current_user.user_id:
         flash("Order not found.", "danger")
@@ -133,7 +132,8 @@ def order_confirmation(order_id):
 @customer_bp.route("/orders")
 @login_required
 def order_history():
-    """Show the current customer's order history."""
+    if current_user.role == 'Admin':
+        abort(403)
     orders = (
         Order.query
         .filter_by(user_id=current_user.user_id)

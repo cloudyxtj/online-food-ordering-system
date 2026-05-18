@@ -1,9 +1,3 @@
-"""Database models for the Online Food Ordering System.
-
-Implements the 5 tables defined in the data dictionary (Section 1.6.2):
-user, food_items, orders, order_items, audit_logs.
-Covers FR1 (RBAC), FR2 (CRUD), FR3 (Audit Trail).
-"""
 from datetime import datetime, timezone
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -11,10 +5,6 @@ from app import db, login_manager
 
 
 class User(UserMixin, db.Model):
-    """Stores all account information for Customers and Admins.
-
-    FR1: Role-Based Access Control — role field distinguishes Customer from Admin.
-    """
     __tablename__ = "user"
 
     user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -47,10 +37,6 @@ def load_user(user_id):
 
 
 class FoodItem(db.Model):
-    """Catalog of all products available for ordering.
-
-    FR2: CRUD operations — Admins can add, edit, toggle availability.
-    """
     __tablename__ = "food_items"
 
     food_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -63,7 +49,6 @@ class FoodItem(db.Model):
 
 
 class Order(db.Model):
-    """Tracks the details of a customer's purchase."""
     __tablename__ = "orders"
 
     order_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -76,7 +61,6 @@ class Order(db.Model):
 
 
 class OrderItem(db.Model):
-    """Links specific foods to specific orders."""
     __tablename__ = "order_items"
 
     order_item_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -87,10 +71,6 @@ class OrderItem(db.Model):
 
 
 class AuditLog(db.Model):
-    """Security logging for sensitive database actions.
-
-    FR3: Audit Trail — logs all INSERT, UPDATE, DELETE actions.
-    """
     __tablename__ = "audit_logs"
 
     log_id = db.Column(db.Integer, primary_key=True, autoincrement=True)

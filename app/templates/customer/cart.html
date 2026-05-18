@@ -41,6 +41,7 @@
                   <td>RM {{ "%.2f"|format(sub) }}</td>
                   <td>
                     <form method="POST" action="{{ url_for('customer.remove_from_cart', food_id=key) }}" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <button type="submit" class="btn btn-sm btn-outline-danger">
                         <i class="bi bi-trash"></i>
                       </button>
@@ -66,6 +67,7 @@
         <i class="bi bi-arrow-left"></i> Continue Shopping
       </a>
       <form method="POST" action="{{ url_for('customer.checkout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn btn-success" style="background-color: #e74c3c; border-color: #e74c3c;">
           <i class="bi bi-check-circle"></i> Confirm Order
         </button>

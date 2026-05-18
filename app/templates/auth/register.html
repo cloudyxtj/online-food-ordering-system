@@ -12,44 +12,70 @@
           <form method="POST" action="{{ url_for('auth.register') }}">
             {{ form.hidden_tag() }}
 
+            <!-- Name Field -->
             <div class="mb-3">
               {{ form.name.label(class="form-label") }}
               {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else ""), placeholder="Your full name") }}
               {% for error in form.name.errors %}
-                <div class="invalid-feedback">{{ error }}</div>
+              <div class="invalid-feedback">{{ error }}</div>
               {% endfor %}
             </div>
 
+            <!-- Email Field -->
             <div class="mb-3">
               {{ form.email.label(class="form-label") }}
-              {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="you@example.com") }}
+              {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""),
+              placeholder="you@example.com") }}
               {% for error in form.email.errors %}
-                <div class="invalid-feedback">{{ error }}</div>
+              <div class="invalid-feedback">{{ error }}</div>
               {% endfor %}
             </div>
 
+            <!-- Password Field -->
             <div class="mb-3">
               {{ form.password.label(class="form-label") }}
-              <div class="input-group">
-                {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="At least 6 characters", id="password") }}
+              <div class="input-group has-validation">
+                {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="At least 8 characters", id="password") }}
                 <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password')">
-                  <i class="bi bi-eye"></i>
+                  <i class="bi bi-eye" id="toggleIcon"></i>
                 </button>
-                {% for error in form.password.errors %}
-                  <div class="invalid-feedback">{{ error }}</div>
-                {% endfor %}
+
+                {% if form.password.errors %}
+                <div class="invalid-feedback">
+                  {% for error in form.password.errors %}
+                  {{ error }}<br>
+                  {% endfor %}
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- Real-time Validation Checklist -->
+              <div id="password-checklist" class="mt-2 p-2 border rounded bg-light" style="font-size: 0.85rem;">
+                <p class="mb-1 fw-bold text-muted">Password must contain:</p>
+                <ul class="list-unstyled mb-0">
+                  <li id="length" class="text-danger small"><i class="bi bi-x-circle me-1"></i> At least 8 characters
+                  </li>
+                  <li id="upper" class="text-danger small"><i class="bi bi-x-circle me-1"></i> One uppercase letter</li>
+                  <li id="lower" class="text-danger small"><i class="bi bi-x-circle me-1"></i> One lowercase letter</li>
+                  <li id="number" class="text-danger small"><i class="bi bi-x-circle me-1"></i> One number</li>
+                  <li id="symbol" class="text-danger small"><i class="bi bi-x-circle me-1"></i> One symbol (!@#$%^&*()-_+=)
+                  </li>
+                </ul>
               </div>
             </div>
 
+            <!-- Confirm Password Field -->
             <div class="mb-3">
               {{ form.confirm_password.label(class="form-label") }}
-              {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""), placeholder="Repeat password") }}
+              {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""),
+              placeholder="Repeat password") }}
               {% for error in form.confirm_password.errors %}
-                <div class="invalid-feedback">{{ error }}</div>
+              <div class="invalid-feedback">{{ error }}</div>
               {% endfor %}
             </div>
 
-            <button type="submit" class="btn btn-primary w-100" style="background-color: #2c3e50; border-color: #2c3e50;">
+            <button type="submit" class="btn btn-primary w-100"
+              style="background-color: #2c3e50; border-color: #2c3e50;">
               Register
             </button>
           </form>
@@ -67,9 +93,44 @@
 
 {% block extra_scripts %}
 <script>
-function togglePassword(id) {
-  const el = document.getElementById(id);
-  el.type = el.type === 'password' ? 'text' : 'password';
-}
+  // 1. Toggle Password Visibility
+  function togglePassword(id) {
+    const el = document.getElementById(id);
+    const icon = document.getElementById('toggleIcon');
+    if (el.type === 'password') {
+      el.type = 'text';
+      icon.classList.replace('bi-eye', 'bi-eye-slash');
+    } else {
+      el.type = 'password';
+      icon.classList.replace('bi-eye-slash', 'bi-eye');
+    }
+  }
+
+  // 2. Real-time Password Requirements Validator
+  document.getElementById('password').addEventListener('input', function () {
+    const val = this.value;
+
+    // Requirements (Regex)
+    const requirements = [
+      { id: 'length', met: val.length >= 8 },
+      { id: 'upper', met: /[A-Z]/.test(val) },
+      { id: 'lower', met: /[a-z]/.test(val) },
+      { id: 'number', met: /[0-9]/.test(val) },
+      { id: 'symbol', met: /[!@#$%^&*()\-_=+]/.test(val) }
+    ];
+
+    requirements.forEach(req => {
+      const item = document.getElementById(req.id);
+      const icon = item.querySelector('i');
+
+      if (req.met) {
+        item.classList.replace('text-danger', 'text-success');
+        icon.classList.replace('bi-x-circle', 'bi-check-circle');
+      } else {
+        item.classList.replace('text-success', 'text-danger');
+        icon.classList.replace('bi-check-circle', 'bi-x-circle');
+      }
+    });
+  });
 </script>
 {% endblock %}

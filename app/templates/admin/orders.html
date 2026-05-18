@@ -47,12 +47,14 @@
                 {% if order.order_status == "Pending" %}
                   <div class="btn-group btn-group-sm">
                     <form method="POST" action="{{ url_for('admin.update_order_status', order_id=order.order_id) }}" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <input type="hidden" name="status" value="Completed">
                       <button class="btn btn-outline-success" onclick="return confirm('Mark order #{{ order.order_id }} as Completed?')">
                         <i class="bi bi-check-lg"></i> Complete
                       </button>
                     </form>
                     <form method="POST" action="{{ url_for('admin.update_order_status', order_id=order.order_id) }}" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <input type="hidden" name="status" value="Cancelled">
                       <button class="btn btn-outline-danger" onclick="return confirm('Cancel order #{{ order.order_id }}?')">
                         <i class="bi bi-x-lg"></i> Cancel

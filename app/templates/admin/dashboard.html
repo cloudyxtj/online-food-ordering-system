@@ -51,6 +51,7 @@
                 </button>
           
                 <form method="POST" action="{{ url_for('admin.toggle_food', food_id=item.food_id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-warning" title="Toggle Status"
                     onclick="return confirm('Toggle status for {{ item.food_name }}?')">
                     <i class="bi bi-arrow-repeat"></i>
@@ -58,6 +59,7 @@
                 </form>
           
                 <form method="POST" action="{{ url_for('admin.delete_food', food_id=item.food_id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-danger" title="Delete"
                     onclick="return confirm('Delete {{ item.food_name }}? This cannot be undone.')">
                     <i class="bi bi-trash"></i>

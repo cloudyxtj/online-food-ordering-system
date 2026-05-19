@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login_manager
@@ -14,6 +14,8 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), nullable=False, default="Customer")  # Customer | Admin
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     is_active = db.Column(db.Boolean, nullable=False, default=True)
+    failed_login_attempts = db.Column(db.Integer, nullable=False, default=0)
+    locked_until = db.Column(db.DateTime, nullable=True)
 
     orders = db.relationship("Order", backref="customer", lazy=True)
 
@@ -29,6 +31,23 @@ class User(UserMixin, db.Model):
     @property
     def is_admin(self):
         return self.role == "Admin"
+
+    def is_locked(self):
+        """Return True if the account is currently locked out."""
+        if self.locked_until and datetime.utcnow() < self.locked_until:
+            return True
+        return False
+
+    def register_failed_login(self):
+        """Increment failure counter; lock account after 5 failures within 15 minutes."""
+        self.failed_login_attempts += 1
+        if self.failed_login_attempts >= 5:
+            self.locked_until = datetime.utcnow() + timedelta(minutes=5)
+
+    def reset_login_attempts(self):
+        """Clear failure counter and lockout after a successful login."""
+        self.failed_login_attempts = 0
+        self.locked_until = None
 
 
 @login_manager.user_loader

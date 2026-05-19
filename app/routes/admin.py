@@ -5,7 +5,7 @@ FR2: CRUD — add, edit, toggle food items.
 FR3: Audit Trail — all sensitive actions are logged.
 """
 from decimal import Decimal, InvalidOperation
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from functools import wraps
 
@@ -24,6 +24,14 @@ def admin_required(f):
     @login_required
     def decorated(*args, **kwargs):
         if not current_user.is_admin:
+            log_action(
+                user_id=current_user.user_id,
+                action_type="ACCESS_DENIED",
+                description=f"Unauthorized admin access attempt by {current_user.email} on {request.path}",
+                entity_type="user",
+                entity_id=current_user.user_id,
+            )
+            db.session.commit()
             flash("Admin access required.", "danger")
             return redirect(url_for("customer.catalog"))
         return f(*args, **kwargs)
@@ -62,11 +70,15 @@ def add_food():
             entity_id=item.food_id,
         )
         db.session.commit()
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": True, "message": f"Food item '{item.food_name}' added successfully!"})
         flash(f"Food item '{item.food_name}' added successfully!", "success")
     else:
-        for field, errors in form.errors.items():
-            for err in errors:
-                flash(f"{field}: {err}", "danger")
+        errors = [err for field_errors in form.errors.values() for err in field_errors]
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "errors": errors}), 400
+        for err in errors:
+            flash(err, "danger")
 
     return redirect(url_for("admin.dashboard"))
 
@@ -103,12 +115,15 @@ def edit_food(food_id):
         )
         
         db.session.commit()
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": True, "message": f"Food item '{item.food_name}' updated successfully."})
         flash(f"Food item '{item.food_name}' updated successfully.", "success")
     else:
-        # 5. If validation fails (e.g., negative price), show why
-        for field, errors in form.errors.items():
-            for err in errors:
-                flash(f"{field.replace('_', ' ').title()}: {err}", "danger")
+        errors = [err for field_errors in form.errors.values() for err in field_errors]
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "errors": errors}), 400
+        for err in errors:
+            flash(err, "danger")
 
     return redirect(url_for("admin.dashboard"))
 
@@ -146,7 +161,6 @@ def delete_food(food_id):
         flash("Food item not found.", "danger")
         return redirect(url_for("admin.dashboard"))
     food_name = item.food_name
-    db.session.delete(item)
     log_action(
         user_id=current_user.user_id,
         action_type="DELETE",
@@ -154,6 +168,7 @@ def delete_food(food_id):
         entity_type="food_items",
         entity_id=food_id,
     )
+    db.session.delete(item)
     db.session.commit()
     flash(f"Food item '{food_name}' deleted.", "success")
     return redirect(url_for("admin.dashboard"))

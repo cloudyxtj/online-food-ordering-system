@@ -22,12 +22,17 @@ def build_database_uri():
         encrypt = os.environ.get("MSSQL_ENCRYPT", "no")
         trust_server_certificate = os.environ.get("MSSQL_TRUST_SERVER_CERTIFICATE", "yes")
 
+        # ColumnEncryption=Enabled tells the ODBC driver to transparently
+        # decrypt Always Encrypted columns using the certificate in the
+        # Windows Certificate Store. Without this, encrypted columns return
+        # binary ciphertext instead of plaintext.
         parts = [
             f"DRIVER={{{driver}}}",
             f"SERVER={server}",
             f"DATABASE={database}",
             f"Encrypt={encrypt}",
             f"TrustServerCertificate={trust_server_certificate}",
+            "ColumnEncryption=Enabled",
         ]
 
         username = os.environ.get("MSSQL_USERNAME")

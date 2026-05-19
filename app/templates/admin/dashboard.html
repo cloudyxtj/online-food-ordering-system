@@ -10,6 +10,15 @@
     </button>
   </div>
 
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endwith %}
+
   {% if not items %}
     <div class="alert alert-info">No food items yet. Add one using the button above!</div>
   {% else %}
@@ -26,9 +35,10 @@
               <th>Actions</th>
             </tr>
           </thead>
+          <tbody>
           {% for item in items %}
           <tr>
-            <td>{{ item.food_id }}</td>
+            <td>{{ loop.index }}</td>
             <td><strong>{{ item.food_name }}</strong></td>
             <td class="text-muted small">
               {{ (item.description or "—")[:60] }}{% if item.description and item.description|length > 60 %}...{% endif %}
@@ -49,7 +59,7 @@
                   data-bs-target="#editFoodModal{{ item.food_id }}">
                   <i class="bi bi-pencil"></i>
                 </button>
-          
+
                 <form method="POST" action="{{ url_for('admin.toggle_food', food_id=item.food_id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-warning" title="Toggle Status"
@@ -57,7 +67,7 @@
                     <i class="bi bi-arrow-repeat"></i>
                   </button>
                 </form>
-          
+
                 <form method="POST" action="{{ url_for('admin.delete_food', food_id=item.food_id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button class="btn btn-danger" title="Delete"
@@ -80,13 +90,14 @@
 <div class="modal fade" id="addFoodModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form method="POST" action="{{ url_for('admin.add_food') }}">
+      <form id="addFoodForm" method="POST" action="{{ url_for('admin.add_food') }}">
         {{ form.hidden_tag() }}
         <div class="modal-header">
           <h5 class="modal-title">Add New Food Item</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
+          <div id="addFoodErrors" class="alert alert-danger d-none"></div>
           <div class="mb-3">
             {{ form.food_name.label(class="form-label") }}
             {{ form.food_name(class="form-control", placeholder="e.g. Double Cheeseburger") }}
@@ -118,13 +129,14 @@
 <div class="modal fade" id="editFoodModal{{ item.food_id }}" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form method="POST" action="{{ url_for('admin.edit_food', food_id=item.food_id) }}">
+      <form class="editFoodForm" method="POST" action="{{ url_for('admin.edit_food', food_id=item.food_id) }}">
         {{ form.hidden_tag() }}
         <div class="modal-header">
           <h5 class="modal-title">Edit: {{ item.food_name }}</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
+          <div class="editFoodErrors alert alert-danger d-none"></div>
           <div class="mb-3">
             <label class="form-label">Food Name</label>
             <input class="form-control" name="food_name" value="{{ item.food_name }}" required>
@@ -155,4 +167,49 @@
   </div>
 </div>
 {% endfor %}
+
+<script>
+// Generic AJAX form handler for food modals
+// On success: reload the page (table refreshes with new data)
+// On error: show errors inside the modal, keep it open
+function submitFoodForm(form, errorBox) {
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    errorBox.classList.add('d-none');
+    errorBox.innerHTML = '';
+
+    const data = new FormData(form);
+
+    fetch(form.action, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: data,
+    })
+    .then(function (res) { return res.json().then(function (body) { return { status: res.status, body: body }; }); })
+    .then(function (res) {
+      if (res.body.ok) {
+        window.location.reload();
+      } else {
+        errorBox.innerHTML = res.body.errors.map(function (e) { return '<div>' + e + '</div>'; }).join('');
+        errorBox.classList.remove('d-none');
+      }
+    })
+    .catch(function () {
+      errorBox.innerHTML = '<div>An unexpected error occurred. Please try again.</div>';
+      errorBox.classList.remove('d-none');
+    });
+  });
+}
+
+// Wire up Add modal
+submitFoodForm(
+  document.getElementById('addFoodForm'),
+  document.getElementById('addFoodErrors')
+);
+
+// Wire up all Edit modals
+document.querySelectorAll('.editFoodForm').forEach(function (form) {
+  submitFoodForm(form, form.querySelector('.editFoodErrors'));
+});
+</script>
 {% endblock %}

@@ -50,11 +50,27 @@ class LoginForm(FlaskForm):
 
 
 class FoodItemForm(FlaskForm):
-    food_name = StringField("Food Name", validators=[DataRequired(), Length(max=100)])
-    description = TextAreaField("Description", validators=[Length(max=500)])
-    price = DecimalField("Price (RM)", validators=[DataRequired(), NumberRange(min=0.01)])
+    food_name = StringField(
+        "Food Name",
+        validators=[DataRequired(), Length(min=2, max=100, message="Food name must be between 2 and 100 characters.")],
+        filters=[lambda x: x.strip() if x else x],
+    )
+    description = TextAreaField(
+        "Description",
+        validators=[Length(max=500, message="Description cannot exceed 500 characters.")],
+        filters=[lambda x: x.strip() if x else x],
+    )
+    price = DecimalField(
+        "Price (RM)",
+        validators=[DataRequired(), NumberRange(min=0.01, max=9999.99, message="Price must be between RM 0.01 and RM 9,999.99.")],
+    )
     status = SelectField(
         "Status",
         choices=[("Available", "Available"), ("Sold Out", "Sold Out"), ("Hidden", "Hidden")],
         default="Available",
     )
+
+    def validate_status(self, field):
+        allowed = {"Available", "Sold Out", "Hidden"}
+        if field.data not in allowed:
+            raise ValidationError("Invalid status value.")

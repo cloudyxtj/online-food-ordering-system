@@ -4,3 +4,4 @@
 __pycache__/
 *.py[cod]
 instance/*.db
+create_db.py

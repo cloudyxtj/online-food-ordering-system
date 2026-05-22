@@ -122,9 +122,7 @@ ALTER TABLE dbo.[user]
 ALTER COLUMN password_hash NVARCHAR(255) MASKED WITH (FUNCTION = 'default()');
 GO
 
--- Step 5: Create a test user to demonstrate masking, then grant UNMASK
---         to whoever your app DB login is (replace 'webapp_admin' as needed).
---         If you use Windows auth / sa directly, skip the GRANT line.
+-- Step 5: Create a test user to demonstrate masking.
 IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'test_mask')
 BEGIN
     CREATE USER test_mask WITHOUT LOGIN;
@@ -132,8 +130,13 @@ END
 GRANT SELECT ON dbo.[user] TO test_mask;
 GO
 
--- Uncomment and replace with your actual app DB login to grant full visibility:
--- GRANT UNMASK TO webapp_admin;
+-- Step 6: Allow the app login to read real values (login requires this).
+-- If your app DB user is different, replace 'webapp_user'.
+IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'webapp_user')
+BEGIN
+    GRANT UNMASK TO webapp_user;
+END
+GO
 
 -- HOW TO TEST DDM:
 --   EXECUTE AS USER = 'test_mask';
@@ -390,9 +393,7 @@ GO
 --   1. Right-click FoodOrderingDB > Tasks > Encrypt Columns
 --   2. Click Next on the Introduction screen
 --   3. Tick the columns you want to encrypt:
---        - dbo.[user].password_hash  → Randomized encryption
---        - dbo.[user].email          → Deterministic encryption
---          (Deterministic allows equality lookups e.g. login by email)
+--        - dbo.[user].credit_card  → Deterministic encryption
 --   4. For Column Master Key: choose "New column master key"
 --        - Name: AlwaysEncryptedCMK
 --        - Key store: Windows Certificate Store — Current User

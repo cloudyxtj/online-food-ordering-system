@@ -64,7 +64,7 @@ class FoodItem(db.Model):
     price = db.Column(db.Numeric(10, 2), nullable=False)
     status = db.Column(db.String(20), nullable=False, default="Available")  # Available | Sold Out | Hidden
 
-    order_items = db.relationship("OrderItem", backref="food_item", lazy=True)
+    order_items = db.relationship("OrderItem", backref="food_item", lazy=True, cascade="all, delete-orphan")
 
 
 class Order(db.Model):

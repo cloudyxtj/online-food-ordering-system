@@ -1,5 +1,5 @@
 from decimal import Decimal
-from flask import Blueprint, abort, app, render_template, redirect, url_for, flash, session, request
+from flask import Blueprint, abort, current_app, render_template, redirect, url_for, flash, session, request
 from flask_login import login_required, current_user
 from app import db
 from app.models import FoodItem, Order, OrderItem
@@ -65,7 +65,7 @@ def remove_from_cart(food_id):
 @customer_bp.route("/checkout", methods=["POST"])
 @login_required
 def checkout():
-    print(app.config["SQLALCHEMY_DATABASE_URI"])
+    print(current_app.config["SQLALCHEMY_DATABASE_URI"])
     if current_user.role == 'Admin':
         abort(403)
     cart = session.get("cart", {})
